@@ -1,0 +1,54 @@
+AI Problem Definition – EndoLifeScan
+
+Objective:
+To classify an uploaded image into one of four predefined categories related to endodontic files.
+
+Input:
+A single RGB image (.jpg / .png) of a dental instrument.
+
+Output Classes:
+1. Valid Endodontic File – Safe for reuse
+2. Damaged Endodontic File – Discard
+3. Cracked / Deformed File – Discard
+4. Not an Endodontic File – Reject
+
+AI Classification Categories:
+
+1. valid
+   - Endodontic file
+   - No visible cracks
+   - No deformation
+   - Safe for reuse
+
+2. cracked
+   - Endodontic file
+   - Micro cracks visible
+   - Risk of fracture
+   - Must be discarded
+
+3. damaged
+   - Endodontic file
+   - Bent / deformed / worn edges
+   - Unsafe for reuse
+   - Must be discarded
+
+4. non-endodontic file
+   - Not a dental endodontic instrument
+   - Invalid image
+   - Must be rejected
+
+Decision Logic:
+If class is Valid → ACCEPTED
+If class is Damaged / Cracked / Not Endodontic → REJECTED
+
+System Type:
+Supervised image classification system.
+Current AI Stage:
+- Rule-based validation
+- Feature extraction implemented
+- Training pipeline prepared
+
+Next Stage:
+- Dataset training using ML classifier
+- Prediction of 4 categories
+- API decision enhancement
