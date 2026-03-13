@@ -323,6 +323,7 @@ def upload_image():
 
         images = [image1, image2, image3]
         detections = []
+        roboflow_scores = []
         heatmaps = []
 
         for img in images:
@@ -346,6 +347,7 @@ def upload_image():
             predictions = result.get("predictions", [])
 
             confidence = float(predictions[0]["confidence"]) if predictions else 0.0
+            roboflow_scores.append(confidence)
 
             # ------------------------------
             # CNN prediction
@@ -384,23 +386,53 @@ def upload_image():
 
             heatmaps.append(os.path.basename(heatmap_path))
 
+        # ==============================
+        # VERIFY IF IT IS AN ENDODONTIC FILE
+        # ==============================
+
+        # If Roboflow confidence is extremely low for all images
+        # it likely means the uploaded image is NOT an endodontic file
+
+        if sum(roboflow_scores)/3 < 0.35:
+            return jsonify({
+                "status": "error",
+                "is_endo_file": False,
+                "message": "Uploaded images do not appear to contain an endodontic file."
+            }), 400
 
         # ------------------------------
         # Final AI scoring
         # ------------------------------
 
-        front = detections[0]
-        middle = detections[1]
-        tip = detections[2]
+        angle1 = detections[0]
+        angle2 = detections[1]
+        angle3 = detections[2]
 
-        # tip is most important (this gives structural integrity)
+        # average structural integrity from 3 viewing angles
         structural_integrity = (
-            front * 0.25 +
-            middle * 0.25 +
-            tip * 0.5
-        ) * 100
+            angle1 +
+            angle2 +
+            angle3
+        ) / 3 * 100
 
         structural_integrity = min(max(structural_integrity, 0), 100)
+        def classify(score):
+            if score < 0.4:
+                return "Unsafe"
+
+            elif score < 0.7:
+                return "Medium Wear"
+
+            else:
+                return "Safe"
+
+
+        segment_results = [
+            {"name": "Angle 1 (0°–120°)", "status": classify(angle1)},
+            {"name": "Angle 2 (120°–240°)", "status": classify(angle2)},
+            {"name": "Angle 3 (240°–360°)", "status": classify(angle3)}
+        ]
+
         fatigue_score = 100 - structural_integrity
 
         if fatigue_score > 50:
@@ -424,6 +456,7 @@ def upload_image():
             "confidence": fatigue_score / 100,
             "fatigue_score": fatigue_score,
             "structural_integrity": structural_integrity,
+            "segment_results": segment_results,
             "heatmaps": heatmaps
         }), 200
 
