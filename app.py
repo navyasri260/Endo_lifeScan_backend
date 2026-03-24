@@ -385,7 +385,12 @@ def upload_image():
             heatmap_path = overlay_heatmap(path, heatmap)
 
             heatmaps.append(os.path.basename(heatmap_path))
-
+        # ✅ SAFETY CHECK (ADD HERE)
+        if len(detections) != 3:
+            return jsonify({
+                "status": "error",
+                "message": "Processing error. Please try again."
+            }), 500
         # ==============================
         # VERIFY IF IT IS AN ENDODONTIC FILE
         # ==============================
@@ -393,12 +398,14 @@ def upload_image():
         # If Roboflow confidence is extremely low for all images
         # it likely means the uploaded image is NOT an endodontic file
 
-        if sum(roboflow_scores)/3 < 0.35:
+        avg_rf = sum(roboflow_scores) / 3
+
+        if avg_rf < 0.25:
             return jsonify({
                 "status": "error",
                 "is_endo_file": False,
                 "message": "Uploaded images do not appear to contain an endodontic file."
-            }), 400
+            }), 200
 
         # ------------------------------
         # Final AI scoring
