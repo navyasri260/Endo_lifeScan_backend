@@ -222,6 +222,50 @@ def change_password():
     return jsonify({"status": "success", "message": "Password updated successfully"}), 200
 
 # ==============================
+# UPDATE PROFILE (NAME + EMAIL)
+# ==============================
+@app.route("/update-profile", methods=["PUT"])
+def update_profile():
+
+    data = request.json
+    old_email = data.get("email")
+    new_name = data.get("new_name")
+    new_email = data.get("new_email")
+
+    db = get_db_connection()
+    cursor = db.cursor(dictionary=True)
+
+    # check if user exists
+    cursor.execute("SELECT id FROM users WHERE email=%s", (old_email,))
+    user = cursor.fetchone()
+
+    if not user:
+        return jsonify({"status": "error", "message": "User not found"}), 404
+
+    # prevent empty updates
+if not new_name or not new_email:
+    return jsonify({"status": "error", "message": "Name and email required"}), 400
+
+# update name + email
+cursor.execute(
+    "UPDATE users SET full_name=%s, email=%s WHERE email=%s",
+    (new_name, new_email, old_email)
+)
+
+    db.commit()
+
+    cursor.close()
+    db.close()
+
+    return jsonify({
+        "status": "success",
+        "message": "Profile updated successfully",
+        "full_name": new_name,
+        "email": new_email
+    }), 200
+
+
+# ==============================
 # FORGOT PASSWORD
 # ==============================
 @app.route("/forgot-password", methods=["POST"])
