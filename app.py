@@ -240,17 +240,21 @@ def update_profile():
     user = cursor.fetchone()
 
     if not user:
+        cursor.close()
+        db.close()
         return jsonify({"status": "error", "message": "User not found"}), 404
 
     # prevent empty updates
-if not new_name or not new_email:
-    return jsonify({"status": "error", "message": "Name and email required"}), 400
+    if not new_name or not new_email:
+        cursor.close()
+        db.close()
+        return jsonify({"status": "error", "message": "Name and email required"}), 400
 
-# update name + email
-cursor.execute(
-    "UPDATE users SET full_name=%s, email=%s WHERE email=%s",
-    (new_name, new_email, old_email)
-)
+    # update name + email
+    cursor.execute(
+        "UPDATE users SET full_name=%s, email=%s WHERE email=%s",
+        (new_name, new_email, old_email)
+    )
 
     db.commit()
 
